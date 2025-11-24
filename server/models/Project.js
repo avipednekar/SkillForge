@@ -15,15 +15,21 @@ const projectSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  technologies: [String],
+  technologies: {
+    type: [String],
+    default: [],
+  },
   imageUrl: {
     type: String,
+    default: "",
   },
   projectUrl: {
     type: String,
+    default: "",
   },
   githubUrl: {
     type: String,
+    default: "",
   },
   createdAt: {
     type: Date,

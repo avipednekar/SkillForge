@@ -354,7 +354,7 @@ const Home = () => {
                             <span className="text-xl font-bold">SkillForge</span>
                         </div>
                         <div className="text-slate-400 text-sm">
-                            © 2024 SkillForge. All rights reserved. Empowering careers with AI.
+                            © 2025 SkillForge. All rights reserved. Empowering careers with AI.
                         </div>
                     </div>
                 </div>
