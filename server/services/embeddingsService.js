@@ -1,11 +1,8 @@
-// Embeddings Service for Resume Parser
-// Generates vector embeddings and stores them in Vector DB (Pinecone)
-
 const { Pinecone } = require("@pinecone-database/pinecone");
-const { OpenAI } = require("openai");
+const { GoogleGenAI } = require("@google/genai");
 
-// Initialize clients (use mock if API keys not available)
-let pinecone, openai;
+// Initialize clients
+let pinecone, genAI;
 
 try {
   if (process.env.PINECONE_API_KEY) {
@@ -14,13 +11,12 @@ try {
     });
   }
 
-  if (process.env.OPENAI_API_KEY) {
-    openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY,
-    });
+  if (process.env.GEMINI_API_KEY) {
+    // New SDK initialization: Pass configuration object
+    genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
   }
 } catch (err) {
-  console.log("Vector DB / OpenAI not configured, using mock embeddings");
+  console.log("Vector DB / Gemini AI not configured, using mock embeddings");
 }
 
 /**
@@ -30,23 +26,22 @@ try {
  */
 const generateEmbedding = async (text) => {
   try {
-    if (!openai) {
-      // Mock embedding (1536 dimensions for text-embedding-ada-002)
-      return Array(1536)
+    if (!genAI) {
+      return Array(768)
         .fill(0)
         .map(() => Math.random());
     }
 
-    const response = await openai.embeddings.create({
-      model: "text-embedding-ada-002",
-      input: text,
+    const result = await genAI.models.embedContent({
+      model: "text-embedding-004",
+      contents: text,
     });
 
-    return response.data[0].embedding;
+    return result.embeddings[0].values;
   } catch (err) {
     console.error("Error generating embedding:", err.message);
     // Return mock embedding on error
-    return Array(1536)
+    return Array(768)
       .fill(0)
       .map(() => Math.random());
   }
@@ -81,7 +76,6 @@ const storeResumeEmbeddings = async (userId, resumeText, parsedData) => {
 
     if (!pinecone) {
       console.log("Mock: Storing embeddings for user", userId);
-      // In mock mode, just log and return
       return { success: true, mock: true };
     }
 

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Upload, X, Image as ImageIcon } from 'lucide-react';
+import { Upload, X, Image as ImageIcon, Github, ExternalLink, Trash2, Plus, Code } from 'lucide-react';
 
 const Projects = () => {
     const [projects, setProjects] = useState([]);
@@ -127,27 +127,30 @@ const Projects = () => {
         }
     };
 
-    if (loading) return <div className="text-white">Loading projects...</div>;
+    if (loading) return <div className="text-white animate-pulse">Loading projects...</div>;
 
     return (
         <div className="mt-8">
             <div className="flex justify-between items-center mb-6">
-                <h2 className="text-xl font-semibold text-white">My Projects</h2>
+                <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+                    <Code className="w-6 h-6 text-primary" /> My Projects
+                </h2>
                 <button
                     onClick={() => setIsAdding(!isAdding)}
-                    className="btn btn-primary text-sm"
+                    className={`btn ${isAdding ? 'bg-white/10 hover:bg-white/20 text-white' : 'btn-primary'} text-sm flex items-center gap-2 px-4 py-2 rounded-lg transition-all`}
                 >
+                    {isAdding ? <X className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
                     {isAdding ? 'Cancel' : 'Add Project'}
                 </button>
             </div>
 
             {isAdding && (
-                <form onSubmit={onSubmit} className="bg-surface p-6 rounded-xl border border-secondary/20 mb-8 space-y-4">
+                <form onSubmit={onSubmit} className="bg-surface p-6 rounded-2xl border border-white/10 shadow-xl mb-8 space-y-6 animate-in fade-in slide-in-from-top-4 duration-300">
                     {/* Image Upload Section */}
                     <div>
                         <label className="block text-sm font-medium text-slate-400 mb-2">Project Image</label>
                         {!imagePreview ? (
-                            <div className="border-2 border-dashed border-secondary/30 rounded-lg p-8 text-center hover:border-primary/50 transition-colors">
+                            <div className="border-2 border-dashed border-white/10 rounded-xl p-8 text-center hover:border-primary/50 hover:bg-white/5 transition-all cursor-pointer group">
                                 <input
                                     type="file"
                                     id="imageUpload"
@@ -155,87 +158,100 @@ const Projects = () => {
                                     onChange={handleImageUpload}
                                     className="hidden"
                                 />
-                                <label htmlFor="imageUpload" className="cursor-pointer">
-                                    <Upload className="w-12 h-12 mx-auto mb-3 text-slate-500" />
-                                    <p className="text-slate-400 mb-1">Click to upload or drag and drop</p>
+                                <label htmlFor="imageUpload" className="cursor-pointer w-full h-full block">
+                                    <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-white/5 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                                        <Upload className="w-8 h-8 text-slate-400 group-hover:text-primary transition-colors" />
+                                    </div>
+                                    <p className="text-slate-300 font-medium mb-1">Click to upload or drag and drop</p>
                                     <p className="text-sm text-slate-500">PNG, JPG, GIF, WebP up to 5MB</p>
                                 </label>
                                 {uploading && (
-                                    <p className="text-primary mt-3">Uploading...</p>
+                                    <p className="text-primary mt-3 font-medium animate-pulse">Uploading...</p>
                                 )}
                             </div>
                         ) : (
-                            <div className="relative">
-                                <img src={imagePreview} alt="Preview" className="w-full h-64 object-cover rounded-lg" />
-                                <button
-                                    type="button"
-                                    onClick={removeImage}
-                                    className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white p-2 rounded-full"
-                                >
-                                    <X className="w-4 h-4" />
-                                </button>
+                            <div className="relative group">
+                                <img src={imagePreview} alt="Preview" className="w-full h-64 object-cover rounded-xl shadow-lg" />
+                                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl flex items-center justify-center">
+                                    <button
+                                        type="button"
+                                        onClick={removeImage}
+                                        className="bg-red-500 hover:bg-red-600 text-white p-3 rounded-full transform scale-90 group-hover:scale-100 transition-all shadow-lg"
+                                    >
+                                        <Trash2 className="w-5 h-5" />
+                                    </button>
+                                </div>
                             </div>
                         )}
                     </div>
 
-                    <div>
-                        <label className="block text-sm font-medium text-slate-400 mb-1">Project Title</label>
-                        <input
-                            type="text"
-                            name="title"
-                            value={formData.title}
-                            onChange={onChange}
-                            required
-                            className="w-full bg-background border border-secondary/30 rounded-lg px-4 py-2 text-white focus:ring-2 focus:ring-primary focus:border-transparent"
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-slate-400 mb-1">Description</label>
-                        <textarea
-                            name="description"
-                            value={formData.description}
-                            onChange={onChange}
-                            required
-                            rows="3"
-                            className="w-full bg-background border border-secondary/30 rounded-lg px-4 py-2 text-white focus:ring-2 focus:ring-primary focus:border-transparent"
-                        ></textarea>
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-slate-400 mb-1">Technologies (comma separated)</label>
-                        <input
-                            type="text"
-                            name="technologies"
-                            value={formData.technologies}
-                            onChange={onChange}
-                            className="w-full bg-background border border-secondary/30 rounded-lg px-4 py-2 text-white focus:ring-2 focus:ring-primary focus:border-transparent"
-                        />
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm font-medium text-slate-400 mb-1">Project URL</label>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="md:col-span-2">
+                            <label className="block text-sm font-medium text-slate-400 mb-1">Project Title</label>
                             <input
                                 type="text"
-                                name="projectUrl"
-                                value={formData.projectUrl}
+                                name="title"
+                                value={formData.title}
                                 onChange={onChange}
-                                placeholder="https://example.com"
-                                className="w-full bg-background border border-secondary/30 rounded-lg px-4 py-2 text-white focus:ring-2 focus:ring-primary focus:border-transparent"
+                                required
+                                className="w-full bg-black/20 border border-white/10 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all"
+                                placeholder="e.g. E-commerce Platform"
                             />
+                        </div>
+                        <div className="md:col-span-2">
+                            <label className="block text-sm font-medium text-slate-400 mb-1">Description</label>
+                            <textarea
+                                name="description"
+                                value={formData.description}
+                                onChange={onChange}
+                                required
+                                rows="3"
+                                className="w-full bg-black/20 border border-white/10 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all resize-none"
+                                placeholder="Briefly describe your project..."
+                            ></textarea>
+                        </div>
+                        <div className="md:col-span-2">
+                            <label className="block text-sm font-medium text-slate-400 mb-1">Technologies (comma separated)</label>
+                            <input
+                                type="text"
+                                name="technologies"
+                                value={formData.technologies}
+                                onChange={onChange}
+                                className="w-full bg-black/20 border border-white/10 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all"
+                                placeholder="React, Node.js, MongoDB"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-slate-400 mb-1">Project URL</label>
+                            <div className="relative">
+                                <ExternalLink className="w-4 h-4 absolute left-3 top-3.5 text-slate-500" />
+                                <input
+                                    type="text"
+                                    name="projectUrl"
+                                    value={formData.projectUrl}
+                                    onChange={onChange}
+                                    placeholder="https://example.com"
+                                    className="w-full bg-black/20 border border-white/10 rounded-lg pl-10 pr-4 py-3 text-white focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all"
+                                />
+                            </div>
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-slate-400 mb-1">GitHub URL</label>
-                            <input
-                                type="text"
-                                name="githubUrl"
-                                value={formData.githubUrl}
-                                onChange={onChange}
-                                placeholder="https://github.com/username/repo"
-                                className="w-full bg-background border border-secondary/30 rounded-lg px-4 py-2 text-white focus:ring-2 focus:ring-primary focus:border-transparent"
-                            />
+                            <div className="relative">
+                                <Github className="w-4 h-4 absolute left-3 top-3.5 text-slate-500" />
+                                <input
+                                    type="text"
+                                    name="githubUrl"
+                                    value={formData.githubUrl}
+                                    onChange={onChange}
+                                    placeholder="https://github.com/username/repo"
+                                    className="w-full bg-black/20 border border-white/10 rounded-lg pl-10 pr-4 py-3 text-white focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all"
+                                />
+                            </div>
                         </div>
                     </div>
-                    <div className="flex justify-end">
-                        <button type="submit" className="btn btn-primary" disabled={uploading}>
+                    <div className="flex justify-end pt-4 border-t border-white/5">
+                        <button type="submit" className="btn btn-primary px-8 py-2.5 shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all" disabled={uploading}>
                             {uploading ? 'Uploading...' : 'Save Project'}
                         </button>
                     </div>
@@ -244,50 +260,67 @@ const Projects = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {projects.map(project => (
-                    <div key={project._id} className="bg-surface rounded-xl border border-secondary/20 overflow-hidden flex flex-col hover:border-primary/30 transition-colors">
-                        {project.imageUrl ? (
-                            <img src={project.imageUrl} alt={project.title} className="w-full h-48 object-cover" />
-                        ) : (
-                            <div className="w-full h-48 bg-secondary/10 flex items-center justify-center">
-                                <ImageIcon className="w-16 h-16 text-slate-600" />
-                            </div>
-                        )}
+                    <div key={project._id} className="group bg-surface rounded-2xl border border-white/10 overflow-hidden flex flex-col hover:border-primary/50 hover:shadow-2xl hover:shadow-primary/10 transition-all duration-300 hover:-translate-y-1">
+                        <div className="relative h-48 overflow-hidden">
+                            {project.imageUrl ? (
+                                <img src={project.imageUrl} alt={project.title} className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-500" />
+                            ) : (
+                                <div className="w-full h-full bg-gradient-to-br from-slate-800 to-slate-900 flex items-center justify-center group-hover:from-slate-800 group-hover:to-primary/20 transition-colors">
+                                    <ImageIcon className="w-12 h-12 text-slate-600 group-hover:text-primary/50 transition-colors" />
+                                </div>
+                            )}
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60"></div>
+                        </div>
+
                         <div className="p-6 flex-1 flex flex-col">
-                            <h3 className="text-lg font-bold text-white mb-2">{project.title}</h3>
-                            <p className="text-slate-400 text-sm mb-4 flex-1">{project.description}</p>
-                            <div className="flex flex-wrap gap-2 mb-4">
+                            <h3 className="text-xl font-bold text-white mb-2 group-hover:text-primary transition-colors">{project.title}</h3>
+                            <p className="text-slate-400 text-sm mb-4 flex-1 line-clamp-3 leading-relaxed">{project.description}</p>
+
+                            <div className="flex flex-wrap gap-2 mb-6">
                                 {project.technologies.map((tech, index) => (
-                                    <span key={index} className="text-xs bg-secondary/20 text-slate-300 px-2 py-1 rounded">
+                                    <span key={index} className="text-xs font-medium bg-white/5 border border-white/10 text-slate-300 px-2.5 py-1 rounded-full">
                                         {tech}
                                     </span>
                                 ))}
                             </div>
-                            <div className="flex justify-between items-center mt-auto">
+
+                            <div className="flex justify-between items-center mt-auto pt-4 border-t border-white/5">
                                 <div className="flex gap-3">
                                     {project.githubUrl && (
-                                        <a href={project.githubUrl} target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-white text-sm">
-                                            GitHub
+                                        <a href={project.githubUrl} target="_blank" rel="noopener noreferrer" className="p-2 rounded-full bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-colors" title="View Code">
+                                            <Github className="w-4 h-4" />
                                         </a>
                                     )}
                                     {project.projectUrl && (
-                                        <a href={project.projectUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:text-primary-hover text-sm">
-                                            Live Demo
+                                        <a href={project.projectUrl} target="_blank" rel="noopener noreferrer" className="p-2 rounded-full bg-primary/10 hover:bg-primary/20 text-primary hover:text-primary-hover transition-colors" title="Live Demo">
+                                            <ExternalLink className="w-4 h-4" />
                                         </a>
                                     )}
                                 </div>
                                 <button
                                     onClick={() => deleteProject(project._id)}
-                                    className="text-red-400 hover:text-red-300 text-sm"
+                                    className="text-red-400/60 hover:text-red-400 text-xs font-medium px-3 py-1 rounded-full hover:bg-red-400/10 transition-colors"
                                 >
-                                    Delete
+                                    Remove
                                 </button>
                             </div>
                         </div>
                     </div>
                 ))}
+
                 {projects.length === 0 && !isAdding && (
-                    <div className="col-span-full text-center py-10 text-slate-500">
-                        No projects added yet. Click "Add Project" to get started.
+                    <div className="col-span-full py-16 text-center border-2 border-dashed border-white/10 rounded-2xl bg-white/5">
+                        <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-white/5 flex items-center justify-center">
+                            <Code className="w-8 h-8 text-slate-500" />
+                        </div>
+                        <h3 className="text-lg font-medium text-white mb-1">No projects yet</h3>
+                        <p className="text-slate-400 mb-6">Showcase your work to the world.</p>
+                        <button
+                            onClick={() => setIsAdding(true)}
+                            className="btn btn-primary px-6 py-2"
+                        >
+                            Add Your First Project
+                        </button>
                     </div>
                 )}
             </div>

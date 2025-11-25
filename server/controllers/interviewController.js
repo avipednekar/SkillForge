@@ -1,7 +1,6 @@
 const ragService = require("../services/ragService");
 const InterviewSession = require("../models/InterviewSession");
 
-
 exports.startInterview = async (req, res) => {
   const { resumeText, jobDescription } = req.body;
 
@@ -35,6 +34,10 @@ exports.submitAnswer = async (req, res) => {
 
   try {
     const evaluation = await ragService.evaluateAnswer(question, answer);
+    const nextQuestion = await ragService.generateNextQuestion(
+      question,
+      answer
+    );
 
     const session = await InterviewSession.findById(sessionId);
     if (session) {
@@ -62,7 +65,7 @@ exports.submitAnswer = async (req, res) => {
       await session.save();
     }
 
-    res.json(evaluation);
+    res.json({ ...evaluation, nextQuestion });
   } catch (err) {
     console.error(err);
     res.status(500).send("Server error evaluating answer");
