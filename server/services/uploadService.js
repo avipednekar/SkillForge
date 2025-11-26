@@ -1,12 +1,14 @@
-// Upload Service - Handles file uploads for images
+// Upload Service - Handles file uploads for images and resumes
 // Supports both local storage and S3/MinIO
 
 const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
 
-// Configure storage
-const storage = multer.diskStorage({
+// === IMAGE UPLOAD CONFIGURATION ===
+
+// Configure storage for images
+const imageStorage = multer.diskStorage({
   destination: function (req, file, cb) {
     const uploadPath = "uploads/projects";
     // Ensure directory exists
@@ -26,7 +28,7 @@ const storage = multer.diskStorage({
 });
 
 // File filter for images only
-const fileFilter = (req, file, cb) => {
+const imageFileFilter = (req, file, cb) => {
   const allowedTypes = /jpeg|jpg|png|gif|webp/;
   const extname = allowedTypes.test(
     path.extname(file.originalname).toLowerCase()
@@ -40,14 +42,70 @@ const fileFilter = (req, file, cb) => {
   }
 };
 
-// Multer upload instance
+// Multer upload instance for images
 const upload = multer({
-  storage: storage,
+  storage: imageStorage,
   limits: {
     fileSize: 5 * 1024 * 1024, // 5MB limit
   },
-  fileFilter: fileFilter,
+  fileFilter: imageFileFilter,
 });
+
+// === RESUME UPLOAD CONFIGURATION ===
+
+// Configure storage for resumes
+const resumeStorage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    const uploadPath = "uploads/resumes";
+    // Ensure directory exists
+    if (!fs.existsSync(uploadPath)) {
+      fs.mkdirSync(uploadPath, { recursive: true });
+    }
+    cb(null, uploadPath);
+  },
+  filename: function (req, file, cb) {
+    // Create unique filename with user ID and timestamp
+    const timestamp = Date.now();
+    const uniqueSuffix = Math.round(Math.random() * 1e9);
+    const ext = path.extname(file.originalname);
+    const baseName = path.basename(file.originalname, ext);
+
+    // Format: resume_userId_timestamp_random.pdf
+    cb(null, `resume_${req.user.id}_${timestamp}_${uniqueSuffix}${ext}`);
+  },
+});
+
+// File filter for resumes only (PDF and DOCX)
+const resumeFileFilter = (req, file, cb) => {
+  const allowedTypes = /pdf|docx/;
+  const extname = allowedTypes.test(
+    path.extname(file.originalname).toLowerCase()
+  );
+
+  // Check MIME types
+  const allowedMimes = [
+    "application/pdf",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  ];
+  const mimetype = allowedMimes.includes(file.mimetype);
+
+  if (extname && mimetype) {
+    return cb(null, true);
+  } else {
+    cb(new Error("Only PDF and DOCX files are allowed for resume uploads"));
+  }
+};
+
+// Multer upload instance for resumes
+const resumeUpload = multer({
+  storage: resumeStorage,
+  limits: {
+    fileSize: 10 * 1024 * 1024, // 10MB limit for resumes
+  },
+  fileFilter: resumeFileFilter,
+});
+
+// === HELPER FUNCTIONS ===
 
 // Delete file helper
 const deleteFile = (filePath) => {
@@ -62,6 +120,7 @@ const deleteFile = (filePath) => {
 };
 
 module.exports = {
-  upload,
+  upload, // For images
+  resumeUpload, // For resumes
   deleteFile,
 };

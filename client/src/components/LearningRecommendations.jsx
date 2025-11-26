@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import api from '../utils/api';
 import { BookOpen, Video, FileText, GraduationCap, ArrowRight, Sparkles } from 'lucide-react';
 
 const LearningRecommendations = () => {
@@ -9,10 +9,7 @@ const LearningRecommendations = () => {
     useEffect(() => {
         const fetchRecommendations = async () => {
             try {
-                const token = localStorage.getItem('token');
-                const res = await axios.get('http://localhost:5000/api/learning/recommendations', {
-                    headers: { 'x-auth-token': token }
-                });
+                const res = await api.get('/learning/recommendations');
                 setRecommendations(res.data);
                 setLoading(false);
             } catch (err) {
@@ -20,6 +17,7 @@ const LearningRecommendations = () => {
                 setLoading(false);
             }
         };
+
         fetchRecommendations();
     }, []);
 
@@ -71,8 +69,8 @@ const LearningRecommendations = () => {
                                         </a>
                                         <div className="flex items-center gap-2">
                                             <span className={`text-[10px] px-2 py-0.5 rounded-full uppercase font-bold tracking-wide ${resource.difficulty === 'beginner' ? 'bg-green-500/10 text-green-400 border border-green-500/20' :
-                                                    resource.difficulty === 'intermediate' ? 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20' :
-                                                        'bg-red-500/10 text-red-400 border border-red-500/20'
+                                                resource.difficulty === 'intermediate' ? 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20' :
+                                                    'bg-red-500/10 text-red-400 border border-red-500/20'
                                                 }`}>
                                                 {resource.difficulty}
                                             </span>

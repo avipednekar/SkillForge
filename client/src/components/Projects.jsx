@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import { Upload, X, Image as ImageIcon, Github, ExternalLink, Trash2, Plus, Code } from 'lucide-react';
+import api from '../utils/api';
+import { Code, Plus, X, Upload, Trash2, ExternalLink, Github, ImageIcon } from 'lucide-react';
 
 const Projects = () => {
     const [projects, setProjects] = useState([]);
@@ -17,16 +17,9 @@ const Projects = () => {
         githubUrl: ''
     });
 
-    useEffect(() => {
-        fetchProjects();
-    }, []);
-
     const fetchProjects = async () => {
         try {
-            const token = localStorage.getItem('token');
-            const res = await axios.get('http://localhost:5000/api/projects', {
-                headers: { 'x-auth-token': token }
-            });
+            const res = await api.get('/projects');
             setProjects(res.data);
             setLoading(false);
         } catch (err) {
@@ -34,6 +27,10 @@ const Projects = () => {
             setLoading(false);
         }
     };
+
+    useEffect(() => {
+        fetchProjects();
+    }, []);
 
     const onChange = e => setFormData({ ...formData, [e.target.name]: e.target.value });
 
@@ -67,10 +64,8 @@ const Projects = () => {
         uploadFormData.append('image', file);
 
         try {
-            const token = localStorage.getItem('token');
-            const res = await axios.post('http://localhost:5000/api/upload/image', uploadFormData, {
+            const res = await api.post('/upload/image', uploadFormData, {
                 headers: {
-                    'x-auth-token': token,
                     'Content-Type': 'multipart/form-data'
                 }
             });
@@ -93,10 +88,7 @@ const Projects = () => {
     const onSubmit = async e => {
         e.preventDefault();
         try {
-            const token = localStorage.getItem('token');
-            await axios.post('http://localhost:5000/api/projects', formData, {
-                headers: { 'x-auth-token': token }
-            });
+            await api.post('/projects', formData);
             setFormData({
                 title: '',
                 description: '',
@@ -116,10 +108,7 @@ const Projects = () => {
     const deleteProject = async (id) => {
         if (window.confirm('Are you sure you want to delete this project?')) {
             try {
-                const token = localStorage.getItem('token');
-                await axios.delete(`http://localhost:5000/api/projects/${id}`, {
-                    headers: { 'x-auth-token': token }
-                });
+                await api.delete(`/projects/${id}`);
                 fetchProjects();
             } catch (err) {
                 console.error(err);

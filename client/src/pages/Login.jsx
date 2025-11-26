@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../utils/api';
 
 const Login = () => {
     const [formData, setFormData] = useState({
@@ -17,8 +17,8 @@ const Login = () => {
     const onSubmit = async e => {
         e.preventDefault();
         try {
-            const res = await axios.post('http://localhost:5000/api/auth/login', formData);
-            localStorage.setItem('token', res.data.token);
+            await api.post('/auth/login', formData);
+            // Token is now handled via httpOnly cookie
             navigate('/dashboard');
         } catch (err) {
             setError(err.response?.data?.message || 'Login failed');

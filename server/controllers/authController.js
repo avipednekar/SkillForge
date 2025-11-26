@@ -39,7 +39,14 @@ exports.register = async (req, res) => {
       { expiresIn: "1d" },
       (err, token) => {
         if (err) throw err;
-        res.json({ token });
+        res
+          .cookie("token", token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "strict",
+            maxAge: 24 * 60 * 60 * 1000, // 1 day
+          })
+          .json({ message: "Registered successfully" });
       }
     );
   } catch (err) {
@@ -78,13 +85,24 @@ exports.login = async (req, res) => {
       { expiresIn: "1d" },
       (err, token) => {
         if (err) throw err;
-        res.json({ token });
+        res
+          .cookie("token", token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "strict",
+            maxAge: 24 * 60 * 60 * 1000, // 1 day
+          })
+          .json({ message: "Logged in successfully" });
       }
     );
   } catch (err) {
     console.error(err.message);
     res.status(500).send("Server error");
   }
+};
+
+exports.logout = (req, res) => {
+  res.clearCookie("token").json({ message: "Logged out successfully" });
 };
 
 exports.getMe = async (req, res) => {

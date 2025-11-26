@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import api from '../utils/api';
 import { useNavigate } from 'react-router-dom';
 import { LogOut, Edit2, User, Github, Linkedin, Globe, Code, Briefcase, Award, Home } from 'lucide-react';
 import Projects from '../components/Projects';
@@ -29,14 +29,7 @@ const Dashboard = () => {
     useEffect(() => {
         const fetchProfile = async () => {
             try {
-                const token = localStorage.getItem('token');
-                if (!token) {
-                    navigate('/login');
-                    return;
-                }
-                const res = await axios.get('http://localhost:5000/api/auth/me', {
-                    headers: { 'x-auth-token': token }
-                });
+                const res = await api.get('/auth/me');
                 setUser(res.data);
                 setFormData({
                     firstName: res.data.profile?.firstName || '',
@@ -74,10 +67,7 @@ const Dashboard = () => {
     const onSubmit = async e => {
         e.preventDefault();
         try {
-            const token = localStorage.getItem('token');
-            const res = await axios.put('http://localhost:5000/api/profile/me', formData, {
-                headers: { 'x-auth-token': token }
-            });
+            const res = await api.put('/profile/me', formData);
             setUser(res.data);
             setIsEditing(false);
         } catch (err) {

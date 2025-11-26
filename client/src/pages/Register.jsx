@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../utils/api';
 
 const Register = () => {
     const [formData, setFormData] = useState({
@@ -23,12 +23,8 @@ const Register = () => {
             return;
         }
         try {
-            const res = await axios.post('http://localhost:5000/api/auth/register', {
-                username,
-                email,
-                password
-            });
-            localStorage.setItem('token', res.data.token);
+            await api.post('/auth/register', formData);
+            // Token is now handled via httpOnly cookie
             navigate('/dashboard');
         } catch (err) {
             setError(err.response?.data?.message || 'Registration failed');
