@@ -116,17 +116,22 @@ const Projects = () => {
         }
     };
 
-    if (loading) return <div className="text-white animate-pulse">Loading projects...</div>;
+    if (loading) return (
+        <div className="bg-surface rounded-2xl border border-white/10 p-6 shadow-xl animate-pulse">
+            <div className="h-6 w-32 bg-white/10 rounded mb-4"></div>
+            <div className="h-48 bg-white/5 rounded-xl"></div>
+        </div>
+    );
 
     return (
-        <div className="mt-8">
+        <div>
             <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-                    <Code className="w-6 h-6 text-primary" /> My Projects
+                <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                    <Code className="w-5 h-5 text-primary" /> My Projects
                 </h2>
                 <button
                     onClick={() => setIsAdding(!isAdding)}
-                    className={`btn ${isAdding ? 'bg-white/10 hover:bg-white/20 text-white' : 'btn-primary'} text-sm flex items-center gap-2 px-4 py-2 rounded-lg transition-all`}
+                    className={`btn ${isAdding ? 'bg-white/10 hover:bg-white/20 text-white' : 'btn-primary'} text-xs font-semibold flex items-center gap-2 px-4 py-2 rounded-lg transition-all`}
                 >
                     {isAdding ? <X className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
                     {isAdding ? 'Cancel' : 'Add Project'}
@@ -134,7 +139,7 @@ const Projects = () => {
             </div>
 
             {isAdding && (
-                <form onSubmit={onSubmit} className="bg-surface p-6 rounded-2xl border border-white/10 shadow-xl mb-8 space-y-6 animate-in fade-in slide-in-from-top-4 duration-300">
+                <form onSubmit={onSubmit} className="bg-surface p-6 rounded-2xl border border-white/10 shadow-xl mb-6 space-y-6 animate-in fade-in slide-in-from-top-4 duration-300">
                     {/* Image Upload Section */}
                     <div>
                         <label className="block text-sm font-medium text-slate-400 mb-2">Project Image</label>
@@ -240,7 +245,7 @@ const Projects = () => {
                         </div>
                     </div>
                     <div className="flex justify-end pt-4 border-t border-white/5">
-                        <button type="submit" className="btn btn-primary px-8 py-2.5 shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all" disabled={uploading}>
+                        <button type="submit" className="btn btn-primary px-8 py-2.5 shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all font-semibold" disabled={uploading}>
                             {uploading ? 'Uploading...' : 'Save Project'}
                         </button>
                     </div>
@@ -249,8 +254,8 @@ const Projects = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {projects.map(project => (
-                    <div key={project._id} className="group bg-surface rounded-2xl border border-white/10 overflow-hidden flex flex-col hover:border-primary/50 hover:shadow-2xl hover:shadow-primary/10 transition-all duration-300 hover:-translate-y-1">
-                        <div className="relative h-48 overflow-hidden">
+                    <div key={project._id} className="group bg-surface rounded-2xl border border-white/10 overflow-hidden flex flex-col hover:border-primary/50 hover:shadow-2xl hover:shadow-primary/10 transition-all duration-300 hover:-translate-y-1 shadow-xl">
+                        <div className="relative h-40 overflow-hidden">
                             {project.imageUrl ? (
                                 <img src={project.imageUrl} alt={project.title} className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-500" />
                             ) : (
@@ -261,13 +266,13 @@ const Projects = () => {
                             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60"></div>
                         </div>
 
-                        <div className="p-6 flex-1 flex flex-col">
-                            <h3 className="text-xl font-bold text-white mb-2 group-hover:text-primary transition-colors">{project.title}</h3>
-                            <p className="text-slate-400 text-sm mb-4 flex-1 line-clamp-3 leading-relaxed">{project.description}</p>
+                        <div className="p-5 flex-1 flex flex-col">
+                            <h3 className="text-lg font-bold text-white mb-2 group-hover:text-primary transition-colors">{project.title}</h3>
+                            <p className="text-slate-400 text-xs mb-4 flex-1 line-clamp-3 leading-relaxed">{project.description}</p>
 
-                            <div className="flex flex-wrap gap-2 mb-6">
+                            <div className="flex flex-wrap gap-2 mb-5">
                                 {project.technologies.map((tech, index) => (
-                                    <span key={index} className="text-xs font-medium bg-white/5 border border-white/10 text-slate-300 px-2.5 py-1 rounded-full">
+                                    <span key={index} className="text-[10px] font-medium bg-white/5 border border-white/10 text-slate-300 px-2 py-0.5 rounded-full">
                                         {tech}
                                     </span>
                                 ))}
@@ -276,19 +281,19 @@ const Projects = () => {
                             <div className="flex justify-between items-center mt-auto pt-4 border-t border-white/5">
                                 <div className="flex gap-3">
                                     {project.githubUrl && (
-                                        <a href={project.githubUrl} target="_blank" rel="noopener noreferrer" className="p-2 rounded-full bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-colors" title="View Code">
+                                        <a href={project.githubUrl} target="_blank" rel="noopener noreferrer" className="p-1.5 rounded-full bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-colors" title="View Code">
                                             <Github className="w-4 h-4" />
                                         </a>
                                     )}
                                     {project.projectUrl && (
-                                        <a href={project.projectUrl} target="_blank" rel="noopener noreferrer" className="p-2 rounded-full bg-primary/10 hover:bg-primary/20 text-primary hover:text-primary-hover transition-colors" title="Live Demo">
+                                        <a href={project.projectUrl} target="_blank" rel="noopener noreferrer" className="p-1.5 rounded-full bg-primary/10 hover:bg-primary/20 text-primary hover:text-primary-hover transition-colors" title="Live Demo">
                                             <ExternalLink className="w-4 h-4" />
                                         </a>
                                     )}
                                 </div>
                                 <button
                                     onClick={() => deleteProject(project._id)}
-                                    className="text-red-400/60 hover:text-red-400 text-xs font-medium px-3 py-1 rounded-full hover:bg-red-400/10 transition-colors"
+                                    className="text-red-400/60 hover:text-red-400 text-[10px] font-medium px-2 py-1 rounded-full hover:bg-red-400/10 transition-colors"
                                 >
                                     Remove
                                 </button>

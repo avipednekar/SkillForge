@@ -64,7 +64,7 @@ const ResumeParser = () => {
     return (
         <div className="bg-surface p-6 rounded-2xl border border-white/10 shadow-xl">
             <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
-                <FileText className="w-5 h-5 text-primary" /> AI Resume Analyzer
+                <FileText className="w-5 h-5 text-primary" /> Resume Analyzer
             </h2>
 
             <form onSubmit={onUpload} className="mb-6">
@@ -83,7 +83,7 @@ const ResumeParser = () => {
                 <button
                     type="submit"
                     disabled={loading || !file}
-                    className="mt-4 w-full btn btn-primary py-2 text-sm flex items-center justify-center gap-2 disabled:opacity-50"
+                    className="mt-4 w-full btn btn-primary py-2 text-sm font-semibold flex items-center justify-center gap-2 disabled:opacity-50 shadow-lg shadow-primary/20"
                 >
                     {loading ? <><Loader2 className="w-4 h-4 animate-spin" /> Analyzing...</> : 'Analyze Resume'}
                 </button>
@@ -96,8 +96,8 @@ const ResumeParser = () => {
                 <div className="space-y-5 animate-in slide-in-from-bottom-2">
                     <div className="flex justify-between items-center border-b border-white/5 pb-2">
                         <h3 className="font-semibold text-white">Results</h3>
-                        <button onClick={syncToProfile} className="text-xs flex items-center gap-1 text-primary hover:text-primary-hover transition-colors">
-                            <Save className="w-3 h-3" /> Save Skills to Profile
+                        <button onClick={syncToProfile} className="text-xs flex items-center gap-1 text-primary hover:text-primary-hover transition-colors font-medium">
+                            <Save className="w-3 h-3" /> Sync to Profile
                         </button>
                     </div>
 
@@ -105,7 +105,7 @@ const ResumeParser = () => {
                         <p className="text-xs text-slate-500 uppercase font-bold mb-2">Detected Skills</p>
                         <div className="flex flex-wrap gap-2">
                             {parsedData.skills?.length > 0 ? parsedData.skills.map((skill, i) => (
-                                <span key={i} className="bg-primary/10 text-primary border border-primary/20 px-2 py-1 rounded text-xs">
+                                <span key={i} className="bg-primary/10 text-primary border border-primary/20 px-2 py-1 rounded text-xs font-medium">
                                     {skill}
                                 </span>
                             )) : <span className="text-slate-500 text-sm italic">No skills detected</span>}

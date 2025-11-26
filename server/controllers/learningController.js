@@ -1,22 +1,12 @@
 const LearningPath = require("../models/LearningPath");
 const User = require("../models/User");
 
-// @desc    Get learning recommendations based on user profile
-// @route   GET api/learning/recommendations
-// @access  Private
 exports.getRecommendations = async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
     const userSkills = user.profile.skills || [];
 
-    // Simple recommendation logic:
-    // 1. Find learning paths for skills the user HAS (to show advanced stuff)
-    // 2. Find learning paths for related skills they DON'T have
-
-    // For this MVP, let's just return some mock data if the DB is empty,
-    // or query if we seeded it. Since we haven't seeded, I'll return a mix of mock and DB.
-
-    // Mock Seed Data (in memory for now if DB is empty)
+  
     const mockPaths = [
       {
         skill: "React",
