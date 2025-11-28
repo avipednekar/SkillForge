@@ -12,6 +12,11 @@ router.post(
   resumeController.uploadResume
 );
 
-router.post("/parse", auth, resumeController.parseResume);
+router.post(
+  "/parse",
+  auth,
+  resumeUpload.single("resume"),
+  resumeController.parseResume
+);
 
 module.exports = router;

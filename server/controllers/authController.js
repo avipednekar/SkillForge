@@ -43,10 +43,19 @@ exports.register = async (req, res) => {
           .cookie("token", token, {
             httpOnly: true,
             secure: process.env.NODE_ENV === "production",
-            sameSite: "strict",
+            sameSite: "lax", // Changed to lax for better dev experience
             maxAge: 24 * 60 * 60 * 1000, // 1 day
           })
-          .json({ message: "Registered successfully" });
+          .json({
+            message: "Registered successfully",
+            user: {
+              id: user.id,
+              username: user.username,
+              email: user.email,
+              role: user.role,
+              profile: user.profile,
+            },
+          });
       }
     );
   } catch (err) {
@@ -89,10 +98,19 @@ exports.login = async (req, res) => {
           .cookie("token", token, {
             httpOnly: true,
             secure: process.env.NODE_ENV === "production",
-            sameSite: "strict",
+            sameSite: "lax",
             maxAge: 24 * 60 * 60 * 1000, // 1 day
           })
-          .json({ message: "Logged in successfully" });
+          .json({
+            message: "Logged in successfully",
+            user: {
+              id: user.id,
+              username: user.username,
+              email: user.email,
+              role: user.role,
+              profile: user.profile,
+            },
+          });
       }
     );
   } catch (err) {
@@ -108,7 +126,7 @@ exports.logout = (req, res) => {
 exports.getMe = async (req, res) => {
   try {
     const user = await User.findById(req.user.id).select("-password");
-    res.json(user);
+    res.json({ user });
   } catch (err) {
     console.error(err.message);
     res.status(500).send("Server error");

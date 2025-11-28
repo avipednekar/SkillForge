@@ -1,16 +1,16 @@
 const fs = require("fs");
-const {PDFParse} = require("pdf-parse"); 
+const fsPromises = require("fs").promises;
+const { PDFParse } = require("pdf-parse");
 const mammoth = require("mammoth");
 const { GoogleGenAI } = require("@google/genai");
 const embeddingsService = require("../services/embeddingsService");
+const { url } = require("inspector");
 
 // Initialize Gemini
 let genAI;
 
-
 try {
   if (process.env.GEMINI_API_KEY) {
-    // FIX: Updated to new SDK object syntax { apiKey: ... }
     genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
   }
 } catch (err) {
@@ -29,10 +29,13 @@ exports.uploadResume = async (req, res) => {
     console.log("Processing file:", filePath, "Mime:", req.file.mimetype);
 
     if (req.file.mimetype === "application/pdf") {
-      const dataBuffer = fs.readFileSync(filePath);
-      console.log(filePath)
-      const parser = new PDFParse({url:filePath});
+      const dataBuffer = await fsPromises.readFile(filePath);
+      const parser = new PDFParse({ data: dataBuffer });
       const data = await parser.getText();
+
+      // Log PDF metadata for debugging
+      console.log("PDF Info:", await parser.getInfo());
+
       text = data.text;
     } else if (
       req.file.mimetype ===
@@ -59,7 +62,7 @@ exports.uploadResume = async (req, res) => {
     // FIX: Ensure file is deleted even if error occurs
     try {
       if (fs.existsSync(filePath)) {
-        fs.unlinkSync(filePath);
+        await fsPromises.unlink(filePath);
       }
     } catch (cleanupErr) {
       console.error("Error deleting temp file:", cleanupErr);
@@ -68,8 +71,54 @@ exports.uploadResume = async (req, res) => {
 };
 
 exports.parseResume = async (req, res) => {
-  const { text } = req.body;
-  // console.log("text: ",text)
+  let { text } = req.body;
+
+  // Handle file upload if present
+  if (req.file) {
+    const filePath = req.file.path;
+    try {
+      console.log(
+        "Processing file in parseResume:",
+        filePath,
+        "Mime:",
+        req.file.mimetype
+      );
+
+      if (req.file.mimetype === "application/pdf") {
+        const dataBuffer = await fsPromises.readFile(filePath);
+        const parser = new PDFParse({ data: dataBuffer });
+        const data = await parser.getText();
+
+        // console.log("PDF Info:", await parser.getInfo());
+
+        text = data.text;
+      } else if (
+        req.file.mimetype ===
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+      ) {
+        const result = await mammoth.extractRawText({ path: filePath });
+        text = result.value;
+      } else {
+        if (fs.existsSync(filePath)) await fsPromises.unlink(filePath);
+        return res
+          .status(400)
+          .json({ message: "Invalid file format. Only PDF and Docx allowed." });
+      }
+    } catch (err) {
+      console.error("Error extracting text in parseResume:", err);
+      if (fs.existsSync(filePath)) await fsPromises.unlink(filePath);
+      return res.status(500).json({ message: "Error reading file" });
+    } finally {
+      // Cleanup temp file
+      if (fs.existsSync(filePath)) {
+        try {
+          await fsPromises.unlink(filePath);
+        } catch (e) {
+          console.error("Error deleting temp file:", e);
+        }
+      }
+    }
+  }
 
   if (!text) {
     return res.status(400).json({ message: "No text provided" });
@@ -85,9 +134,13 @@ exports.parseResume = async (req, res) => {
     // Use Gemini to parse if available
     if (genAI) {
       const prompt = `
-        You are an expert Resume Parser. Extract the following information from the resume text below and return it in strict JSON format.
+        You are an expert Resume Parser. Extract information from the text below into strict JSON.
         
-        Resume Text: "${text.substring(0, 3000)}"
+        CRITICAL INSTRUCTIONS:
+        1. Fix any OCR issues (e.g., "Python\\n\\nMongoDB" should be two separate skills).
+        2. Analyze the resume and provide 3-5 specific suggestions for improvement.
+        
+        Resume Text: "${text.substring(0, 8000)}" 
         
         Output Format (JSON):
         {
@@ -97,10 +150,18 @@ exports.parseResume = async (req, res) => {
           ],
           "education": [
             { "degree": "Degree Name", "school": "School Name", "year": "Year" }
+          ],
+          "projects": [
+            { "name": "Project Name", "description": "Brief description", "techStack": "Tools used" }
+          ],
+          "suggestions": [
+            "Suggestion 1 (e.g., Add more metrics to experience)",
+            "Suggestion 2 (e.g., Move skills section higher)",
+            "Suggestion 3"
           ]
         }
         
-        Do not include markdown formatting (like \`\`\`json). Just return the raw JSON string.
+        Return ONLY the JSON string.
       `;
 
       try {
@@ -109,14 +170,13 @@ exports.parseResume = async (req, res) => {
           contents: prompt,
         });
 
-        // Safe extraction for new SDK
-        const responseText = result.text;
-        
+        const responseText = result.response
+          ? result.response.text()
+          : result.text;
         const cleanJson = responseText
           .replace(/```json/g, "")
           .replace(/```/g, "")
           .trim();
-          
         parsedData = JSON.parse(cleanJson);
       } catch (aiError) {
         console.error(
@@ -128,8 +188,6 @@ exports.parseResume = async (req, res) => {
       console.log("Gemini API Key missing, returning empty structure");
     }
 
-    // Store embeddings for RAG
-    // Ensure req.user exists (middleware)
     const userId = req.user ? req.user.id : "anonymous";
     const embeddingResult = await embeddingsService.storeResumeEmbeddings(
       userId,
@@ -139,7 +197,9 @@ exports.parseResume = async (req, res) => {
 
     res.json({
       ...parsedData,
-      embeddingsStored: embeddingResult.success,
+      embeddingResult,
+      skills: parsedData.skills || [],
+      suggestions: parsedData.suggestions || ["Could not analyze suggestions."],
     });
   } catch (err) {
     console.error(err);

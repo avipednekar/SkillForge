@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import api from '../utils/api';
+import { useAuth } from '../context/AuthContext';
+import { Eye, EyeOff, Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
 
 const Register = () => {
     const [formData, setFormData] = useState({
@@ -9,8 +11,14 @@ const Register = () => {
         password: '',
         confirmPassword: ''
     });
-    const [error, setError] = useState('');
+
+    // UI States
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
+
     const navigate = useNavigate();
+    const { register } = useAuth(); // Use global auth context
 
     const { username, email, password, confirmPassword } = formData;
 
@@ -18,16 +26,23 @@ const Register = () => {
 
     const onSubmit = async e => {
         e.preventDefault();
+
         if (password !== confirmPassword) {
-            setError('Passwords do not match');
+            toast.error('Passwords do not match');
             return;
         }
+
+        setIsLoading(true);
+
         try {
-            await api.post('/auth/register', formData);
-            // Token is now handled via httpOnly cookie
+            await register(formData);
+            toast.success('Account created successfully!');
+            // Successful registration updates global state via context
             navigate('/dashboard');
         } catch (err) {
-            setError(err.response?.data?.message || 'Registration failed');
+            toast.error(err.response?.data?.message || 'Registration failed. Please try again.');
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -46,11 +61,6 @@ const Register = () => {
                     </p>
                 </div>
                 <form className="mt-8 space-y-6" onSubmit={onSubmit}>
-                    {error && (
-                        <div className="bg-red-500/10 border border-red-500/50 text-red-500 p-3 rounded text-sm text-center">
-                            {error}
-                        </div>
-                    )}
                     <div className="rounded-md shadow-sm space-y-4">
                         <div>
                             <label htmlFor="username" className="sr-only">Username</label>
@@ -79,42 +89,68 @@ const Register = () => {
                                 onChange={onChange}
                             />
                         </div>
-                        <div>
+
+                        {/* Password Field */}
+                        <div className="relative">
                             <label htmlFor="password" className="sr-only">Password</label>
                             <input
                                 id="password"
                                 name="password"
-                                type="password"
+                                type={showPassword ? "text" : "password"}
                                 autoComplete="new-password"
                                 required
-                                className="appearance-none rounded-lg relative block w-full px-3 py-3 border border-secondary/30 bg-background placeholder-slate-500 text-white focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent sm:text-sm"
+                                className="appearance-none rounded-lg relative block w-full px-3 py-3 border border-secondary/30 bg-background placeholder-slate-500 text-white focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent sm:text-sm pr-10"
                                 placeholder="Password"
                                 value={password}
                                 onChange={onChange}
                             />
+                            <button
+                                type="button"
+                                onClick={() => setShowPassword(!showPassword)}
+                                className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-white"
+                            >
+                                {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                            </button>
                         </div>
-                        <div>
+
+                        {/* Confirm Password Field */}
+                        <div className="relative">
                             <label htmlFor="confirmPassword" className="sr-only">Confirm Password</label>
                             <input
                                 id="confirmPassword"
                                 name="confirmPassword"
-                                type="password"
+                                type={showConfirmPassword ? "text" : "password"}
                                 autoComplete="new-password"
                                 required
-                                className="appearance-none rounded-lg relative block w-full px-3 py-3 border border-secondary/30 bg-background placeholder-slate-500 text-white focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent sm:text-sm"
+                                className="appearance-none rounded-lg relative block w-full px-3 py-3 border border-secondary/30 bg-background placeholder-slate-500 text-white focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent sm:text-sm pr-10"
                                 placeholder="Confirm Password"
                                 value={confirmPassword}
                                 onChange={onChange}
                             />
+                            <button
+                                type="button"
+                                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-white"
+                            >
+                                {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                            </button>
                         </div>
                     </div>
 
                     <div>
                         <button
                             type="submit"
-                            className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-primary hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-colors duration-200"
+                            disabled={isLoading}
+                            className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-primary hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-colors duration-200 disabled:opacity-70 disabled:cursor-not-allowed"
                         >
-                            Sign up
+                            {isLoading ? (
+                                <>
+                                    <Loader2 className="animate-spin -ml-1 mr-2 h-5 w-5 text-white" />
+                                    Creating account...
+                                </>
+                            ) : (
+                                'Sign up'
+                            )}
                         </button>
                     </div>
                 </form>

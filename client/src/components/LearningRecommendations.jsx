@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import api from '../utils/api';
 import { BookOpen, Video, FileText, GraduationCap, ArrowRight, Sparkles } from 'lucide-react';
+import { Skeleton } from './ui/Skeleton';
 
 const LearningRecommendations = () => {
     const [recommendations, setRecommendations] = useState([]);
@@ -22,11 +23,11 @@ const LearningRecommendations = () => {
     }, []);
 
     if (loading) return (
-        <div className="h-full bg-surface p-6 rounded-2xl border border-white/10 shadow-xl animate-pulse">
-            <div className="h-8 bg-white/5 rounded w-1/3 mb-6"></div>
+        <div className="h-full bg-surface p-6 rounded-2xl border border-white/10 shadow-xl">
+            <Skeleton className="h-8 w-1/3 mb-6" />
             <div className="space-y-4">
-                <div className="h-32 bg-white/5 rounded-xl"></div>
-                <div className="h-32 bg-white/5 rounded-xl"></div>
+                <Skeleton className="h-32 w-full rounded-xl" />
+                <Skeleton className="h-32 w-full rounded-xl" />
             </div>
         </div>
     );

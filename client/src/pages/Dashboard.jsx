@@ -2,14 +2,15 @@ import React, { useEffect, useState } from 'react';
 import api from '../utils/api';
 import { useNavigate } from 'react-router-dom';
 import { LogOut, Edit2, User, Github, Linkedin, Globe, Code, Briefcase, Award, Home } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { toast } from 'sonner';
 import Projects from '../components/Projects';
 import ResumeParser from '../components/ResumeParser';
 import InterviewCoach from '../components/InterviewCoach';
 import LearningRecommendations from '../components/LearningRecommendations';
 
 const Dashboard = () => {
-    const [user, setUser] = useState(null);
-    const [loading, setLoading] = useState(true);
+    const { user, logout, updateUser, loading: authLoading } = useAuth();
     const [isEditing, setIsEditing] = useState(false);
     const [formData, setFormData] = useState({
         firstName: '',
@@ -27,30 +28,25 @@ const Dashboard = () => {
     const navigate = useNavigate();
 
     useEffect(() => {
-        const fetchProfile = async () => {
-            try {
-                const res = await api.get('/auth/me');
-                setUser(res.data);
-                setFormData({
-                    firstName: res.data.profile?.firstName || '',
-                    lastName: res.data.profile?.lastName || '',
-                    headline: res.data.profile?.headline || '',
-                    bio: res.data.profile?.bio || '',
-                    skills: res.data.profile?.skills?.join(', ') || '',
-                    socials: {
-                        linkedin: res.data.profile?.socials?.linkedin || '',
-                        github: res.data.profile?.socials?.github || '',
-                        website: res.data.profile?.socials?.website || ''
-                    }
-                });
-                setLoading(false);
-            } catch (err) {
-                console.error(err);
-                navigate('/login');
-            }
-        };
-        fetchProfile();
-    }, [navigate]);
+        if (!authLoading && !user) {
+            navigate('/login');
+        }
+
+        if (user) {
+            setFormData({
+                firstName: user.profile?.firstName || '',
+                lastName: user.profile?.lastName || '',
+                headline: user.profile?.headline || '',
+                bio: user.profile?.bio || '',
+                skills: user.profile?.skills?.join(', ') || '',
+                socials: {
+                    linkedin: user.profile?.socials?.linkedin || '',
+                    github: user.profile?.socials?.github || '',
+                    website: user.profile?.socials?.website || ''
+                }
+            });
+        }
+    }, [user, authLoading, navigate]);
 
     const onChange = e => {
         if (e.target.name.startsWith('socials.')) {
@@ -68,18 +64,47 @@ const Dashboard = () => {
         e.preventDefault();
         try {
             const res = await api.put('/profile/me', formData);
-            setUser(res.data);
+            updateUser(res.data);
             setIsEditing(false);
+            toast.success('Profile updated successfully');
         } catch (err) {
             console.error(err);
+            toast.error('Failed to update profile');
         }
     };
 
-    if (loading) return (
-        <div className="min-h-screen bg-background flex items-center justify-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+    const handleLogout = async () => {
+        await logout();
+        navigate('/login');
+    };
+
+    if (authLoading) return (
+        <div className="min-h-screen bg-background text-white p-8">
+            <div className="max-w-7xl mx-auto space-y-8">
+                {/* Hero Skeleton */}
+                <div className="h-64 rounded-3xl bg-white/5 animate-pulse border border-white/5"></div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                    {/* Left Column Skeleton */}
+                    <div className="lg:col-span-4 space-y-8">
+                        <div className="h-96 rounded-2xl bg-white/5 animate-pulse border border-white/5"></div>
+                        <div className="h-64 rounded-2xl bg-white/5 animate-pulse border border-white/5"></div>
+                    </div>
+
+                    {/* Right Column Skeleton */}
+                    <div className="lg:col-span-8 space-y-8">
+                        <div className="h-80 rounded-2xl bg-white/5 animate-pulse border border-white/5"></div>
+                        <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+                            <div className="h-96 rounded-2xl bg-white/5 animate-pulse border border-white/5"></div>
+                            <div className="h-96 rounded-2xl bg-white/5 animate-pulse border border-white/5"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     );
+
+    if (!user) return null;
 
     return (
         <div className="min-h-screen bg-background text-white selection:bg-primary/30">
@@ -104,10 +129,7 @@ const Dashboard = () => {
                                 Home
                             </button>
                             <button
-                                onClick={() => {
-                                    localStorage.removeItem('token');
-                                    navigate('/login');
-                                }}
+                                onClick={handleLogout}
                                 className="flex items-center gap-2 px-4 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-all text-sm font-medium"
                             >
                                 <LogOut className="w-4 h-4" />
@@ -143,9 +165,15 @@ const Dashboard = () => {
                             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary via-purple-500 to-blue-500"></div>
 
                             <div className="flex justify-between items-start mb-6">
-                                <h2 className="text-xl font-bold flex items-center gap-2">
-                                    <User className="w-5 h-5 text-primary" /> Profile
-                                </h2>
+                                <div>
+                                    <h2 className="text-xl font-bold flex items-center gap-2">
+                                        <User className="w-5 h-5 text-primary" /> Profile
+                                    </h2>
+                                    {/* Gamification: Daily Streak */}
+                                    <div className="flex items-center gap-1.5 mt-2 text-xs font-medium text-orange-400 bg-orange-400/10 px-2 py-1 rounded-full border border-orange-400/20 w-fit">
+                                        <span className="animate-pulse">🔥</span> 3 Day Streak
+                                    </div>
+                                </div>
                                 <button
                                     onClick={() => setIsEditing(!isEditing)}
                                     className="p-2 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-colors"

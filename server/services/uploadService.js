@@ -1,13 +1,7 @@
-// Upload Service - Handles file uploads for images and resumes
-// Supports both local storage and S3/MinIO
-
 const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
 
-// === IMAGE UPLOAD CONFIGURATION ===
-
-// Configure storage for images
 const imageStorage = multer.diskStorage({
   destination: function (req, file, cb) {
     const uploadPath = "uploads/projects";
@@ -51,9 +45,6 @@ const upload = multer({
   fileFilter: imageFileFilter,
 });
 
-// === RESUME UPLOAD CONFIGURATION ===
-
-// Configure storage for resumes
 const resumeStorage = multer.diskStorage({
   destination: function (req, file, cb) {
     const uploadPath = "uploads/resumes";
@@ -105,9 +96,6 @@ const resumeUpload = multer({
   fileFilter: resumeFileFilter,
 });
 
-// === HELPER FUNCTIONS ===
-
-// Delete file helper
 const deleteFile = (filePath) => {
   try {
     if (fs.existsSync(filePath)) {
@@ -121,6 +109,6 @@ const deleteFile = (filePath) => {
 
 module.exports = {
   upload, // For images
-  resumeUpload, // For resumes
+  resumeUpload,
   deleteFile,
 };

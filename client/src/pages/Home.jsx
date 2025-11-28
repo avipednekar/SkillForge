@@ -1,5 +1,5 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import {
     Sparkles,
     FileText,
@@ -12,7 +12,8 @@ import {
     Star,
     Zap,
     Target,
-    BarChart
+    BarChart,
+    LogOut // Added for the logout button
 } from 'lucide-react';
 import heroBanner from '../assets/hero_banner.png';
 import aiResume from '../assets/ai_resume.png';
@@ -20,6 +21,14 @@ import interviewCoach from '../assets/interview_coach.png';
 import learningPath from '../assets/learning_path.png';
 
 const Home = () => {
+    const { user, logout } = useAuth();
+    const navigate = useNavigate();
+
+    const handleLogout = async () => {
+        await logout();
+        navigate('/');
+    };
+
     return (
         <div className="min-h-screen bg-background text-white">
             {/* Hero Section */}
@@ -39,18 +48,41 @@ const Home = () => {
                         <h1 className="text-5xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
                             Welcome to SkillForge
                         </h1>
+
+                        {/* Dynamic Greeting */}
                         <p className="text-xl md:text-2xl text-slate-300 mb-10 leading-relaxed">
+                            {user && <span className="text-white font-semibold block mb-2">Welcome back, {user.profile?.firstName || user.username || 'User'}!</span>}
                             Transform your career journey with AI-powered resume optimization,
                             personalized interview coaching, and intelligent learning recommendations.
                         </p>
+
+                        {/* Conditional Buttons based on Login Status */}
                         <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                            <Link to="/register" className="btn btn-primary text-lg px-8 py-4 group">
-                                Get Started Free
-                                <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                            </Link>
-                            <Link to="/login" className="btn btn-secondary text-lg px-8 py-4">
-                                Sign In
-                            </Link>
+                            {user ? (
+                                <>
+                                    <Link to="/dashboard" className="btn btn-primary text-lg px-8 py-4 group">
+                                        Go to Dashboard
+                                        <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                                    </Link>
+                                    <button
+                                        onClick={handleLogout}
+                                        className="btn btn-secondary text-lg px-8 py-4 flex items-center justify-center gap-2"
+                                    >
+                                        Sign Out
+                                        <LogOut className="w-5 h-5" />
+                                    </button>
+                                </>
+                            ) : (
+                                <>
+                                    <Link to="/register" className="btn btn-primary text-lg px-8 py-4 group">
+                                        Get Started Free
+                                        <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                                    </Link>
+                                    <Link to="/login" className="btn btn-secondary text-lg px-8 py-4">
+                                        Sign In
+                                    </Link>
+                                </>
+                            )}
                         </div>
 
                         {/* Stats */}

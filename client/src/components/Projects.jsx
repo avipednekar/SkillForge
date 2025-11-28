@@ -1,13 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import api from '../utils/api';
-import { Code, Plus, X, Upload, Trash2, ExternalLink, Github, ImageIcon } from 'lucide-react';
+import { Code, Plus, X, Trash2, ExternalLink, Github, ImageIcon } from 'lucide-react';
+import { toast } from 'sonner';
+import FileUpload from './ui/FileUpload';
+import { EmptyState } from './ui/EmptyState';
 
 const Projects = () => {
     const [projects, setProjects] = useState([]);
     const [loading, setLoading] = useState(true);
     const [isAdding, setIsAdding] = useState(false);
     const [uploading, setUploading] = useState(false);
-    const [imagePreview, setImagePreview] = useState(null);
+    const [selectedFile, setSelectedFile] = useState(null);
     const [formData, setFormData] = useState({
         title: '',
         description: '',
@@ -17,6 +20,8 @@ const Projects = () => {
         githubUrl: ''
     });
 
+    const [filter, setFilter] = useState('All');
+
     const fetchProjects = async () => {
         try {
             const res = await api.get('/projects');
@@ -24,6 +29,7 @@ const Projects = () => {
             setLoading(false);
         } catch (err) {
             console.error(err);
+            toast.error('Failed to load projects');
             setLoading(false);
         }
     };
@@ -34,29 +40,31 @@ const Projects = () => {
 
     const onChange = e => setFormData({ ...formData, [e.target.name]: e.target.value });
 
-    const handleImageUpload = async (e) => {
-        const file = e.target.files[0];
+    // Extract unique tags
+    const allTags = ['All', ...new Set(projects.flatMap(p => p.technologies))];
+
+    // Filter projects
+    const filteredProjects = filter === 'All'
+        ? projects
+        : projects.filter(p => p.technologies.includes(filter));
+
+    const handleFileSelect = async (file) => {
         if (!file) return;
 
         // Validate file type
         const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
         if (!validTypes.includes(file.type)) {
-            alert('Please upload a valid image file (JPEG, PNG, GIF, or WebP)');
+            toast.error('Please upload a valid image file (JPEG, PNG, GIF, or WebP)');
             return;
         }
 
         // Validate file size (5MB)
         if (file.size > 5 * 1024 * 1024) {
-            alert('Image size should be less than 5MB');
+            toast.error('Image size should be less than 5MB');
             return;
         }
 
-        // Create preview
-        const reader = new FileReader();
-        reader.onloadend = () => {
-            setImagePreview(reader.result);
-        };
-        reader.readAsDataURL(file);
+        setSelectedFile(file);
 
         // Upload to server
         setUploading(true);
@@ -72,16 +80,17 @@ const Projects = () => {
 
             setFormData({ ...formData, imageUrl: `http://localhost:5000${res.data.imageUrl}` });
             setUploading(false);
+            toast.success('Image uploaded successfully');
         } catch (err) {
             console.error(err);
-            alert('Failed to upload image');
+            toast.error('Failed to upload image');
             setUploading(false);
-            setImagePreview(null);
+            setSelectedFile(null);
         }
     };
 
     const removeImage = () => {
-        setImagePreview(null);
+        setSelectedFile(null);
         setFormData({ ...formData, imageUrl: '' });
     };
 
@@ -97,11 +106,13 @@ const Projects = () => {
                 projectUrl: '',
                 githubUrl: ''
             });
-            setImagePreview(null);
+            setSelectedFile(null);
             setIsAdding(false);
             fetchProjects();
+            toast.success('Project added successfully');
         } catch (err) {
             console.error(err);
+            toast.error('Failed to add project');
         }
     };
 
@@ -110,8 +121,10 @@ const Projects = () => {
             try {
                 await api.delete(`/projects/${id}`);
                 fetchProjects();
+                toast.success('Project deleted');
             } catch (err) {
                 console.error(err);
+                toast.error('Failed to delete project');
             }
         }
     };
@@ -138,44 +151,38 @@ const Projects = () => {
                 </button>
             </div>
 
+            {/* Tag Filter */}
+            {!isAdding && projects.length > 0 && (
+                <div className="flex gap-2 mb-6 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-white/10">
+                    {allTags.map(tag => (
+                        <button
+                            key={tag}
+                            onClick={() => setFilter(tag)}
+                            className={`px-3 py-1 rounded-full text-xs font-medium border transition-all whitespace-nowrap
+                                ${filter === tag
+                                    ? 'bg-primary text-white border-primary'
+                                    : 'bg-white/5 text-slate-400 border-white/10 hover:border-white/20 hover:text-white'}`}
+                        >
+                            {tag}
+                        </button>
+                    ))}
+                </div>
+            )}
+
             {isAdding && (
                 <form onSubmit={onSubmit} className="bg-surface p-6 rounded-2xl border border-white/10 shadow-xl mb-6 space-y-6 animate-in fade-in slide-in-from-top-4 duration-300">
                     {/* Image Upload Section */}
                     <div>
                         <label className="block text-sm font-medium text-slate-400 mb-2">Project Image</label>
-                        {!imagePreview ? (
-                            <div className="border-2 border-dashed border-white/10 rounded-xl p-8 text-center hover:border-primary/50 hover:bg-white/5 transition-all cursor-pointer group">
-                                <input
-                                    type="file"
-                                    id="imageUpload"
-                                    accept="image/*"
-                                    onChange={handleImageUpload}
-                                    className="hidden"
-                                />
-                                <label htmlFor="imageUpload" className="cursor-pointer w-full h-full block">
-                                    <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-white/5 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-                                        <Upload className="w-8 h-8 text-slate-400 group-hover:text-primary transition-colors" />
-                                    </div>
-                                    <p className="text-slate-300 font-medium mb-1">Click to upload or drag and drop</p>
-                                    <p className="text-sm text-slate-500">PNG, JPG, GIF, WebP up to 5MB</p>
-                                </label>
-                                {uploading && (
-                                    <p className="text-primary mt-3 font-medium animate-pulse">Uploading...</p>
-                                )}
-                            </div>
-                        ) : (
-                            <div className="relative group">
-                                <img src={imagePreview} alt="Preview" className="w-full h-64 object-cover rounded-xl shadow-lg" />
-                                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl flex items-center justify-center">
-                                    <button
-                                        type="button"
-                                        onClick={removeImage}
-                                        className="bg-red-500 hover:bg-red-600 text-white p-3 rounded-full transform scale-90 group-hover:scale-100 transition-all shadow-lg"
-                                    >
-                                        <Trash2 className="w-5 h-5" />
-                                    </button>
-                                </div>
-                            </div>
+                        <FileUpload
+                            onFileSelect={handleFileSelect}
+                            selectedFile={selectedFile}
+                            onClear={removeImage}
+                            accept={{ 'image/*': [] }}
+                            label="Drag & drop project screenshot"
+                        />
+                        {uploading && (
+                            <p className="text-primary mt-2 text-xs font-medium animate-pulse">Uploading image...</p>
                         )}
                     </div>
 
@@ -253,7 +260,7 @@ const Projects = () => {
             )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {projects.map(project => (
+                {filteredProjects.map(project => (
                     <div key={project._id} className="group bg-surface rounded-2xl border border-white/10 overflow-hidden flex flex-col hover:border-primary/50 hover:shadow-2xl hover:shadow-primary/10 transition-all duration-300 hover:-translate-y-1 shadow-xl">
                         <div className="relative h-40 overflow-hidden">
                             {project.imageUrl ? (
@@ -303,18 +310,20 @@ const Projects = () => {
                 ))}
 
                 {projects.length === 0 && !isAdding && (
-                    <div className="col-span-full py-16 text-center border-2 border-dashed border-white/10 rounded-2xl bg-white/5">
-                        <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-white/5 flex items-center justify-center">
-                            <Code className="w-8 h-8 text-slate-500" />
-                        </div>
-                        <h3 className="text-lg font-medium text-white mb-1">No projects yet</h3>
-                        <p className="text-slate-400 mb-6">Showcase your work to the world.</p>
-                        <button
-                            onClick={() => setIsAdding(true)}
-                            className="btn btn-primary px-6 py-2"
-                        >
-                            Add Your First Project
-                        </button>
+                    <div className="col-span-full">
+                        <EmptyState
+                            icon={Code}
+                            title="No projects yet"
+                            description="Showcase your work to the world. Add your first project to get started."
+                            action={
+                                <button
+                                    onClick={() => setIsAdding(true)}
+                                    className="btn btn-primary px-6 py-2"
+                                >
+                                    Add Your First Project
+                                </button>
+                            }
+                        />
                     </div>
                 )}
             </div>
